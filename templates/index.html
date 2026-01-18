@@ -10,35 +10,54 @@
   <main class="wrap">
     <h1>💍 Come diventare la mia futura moglie</h1>
 
-    <form id="quiz">
-      <section class="card">
+    <!-- Pagina iniziale: Nome -->
+    <div id="page-name" class="quiz-page active">
+      <div class="card">
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <h2>Iniziamo</h2>
         <label>Nome (o nickname)</label>
-        <input name="name"/>
-      </section>
-
-      <div id="questions-container">
-        <!-- Le domande verranno caricate dinamicamente -->
+        <input type="text" id="input-name" />
+        <div class="page-actions">
+          <button type="button" class="btn-next" onclick="nextPage()">Avanti →</button>
+        </div>
       </div>
+    </div>
 
-      <section class="card">
+    <!-- Container per le domande (verrà popolato dinamicamente) -->
+    <div id="questions-pages"></div>
+
+    <!-- Pagina domande aperte -->
+    <div id="page-open-questions" class="quiz-page">
+      <div class="card">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-open"></div>
+        </div>
         <h2>Domande aperte</h2>
         
         <label>Perché io e te funzioneremmo davvero?</label>
-        <textarea name="why_us" rows="4" placeholder="Scrivi come se fosse un messaggio vocale trascritto..." required></textarea>
+        <textarea id="textarea-why-us" rows="4" placeholder="Scrivi come se fosse un messaggio vocale trascritto..." required></textarea>
 
         <label>C'è qualcosa che dovrei sapere (limiti, bisogni, non negoziabili)?</label>
-        <textarea name="non_negotiables" rows="3"></textarea>
-      </section>
+        <textarea id="textarea-non-negotiables" rows="3"></textarea>
 
-      <section class="actions">
-        <button type="submit">🎯 Calcola compatibilità</button>
-      </section>
-    </form>
+        <div class="page-actions">
+          <button type="button" class="btn-prev" onclick="prevPage()">← Indietro</button>
+          <button type="button" class="btn-submit" onclick="submitQuiz()">🎯 Calcola compatibilità</button>
+        </div>
+      </div>
+    </div>
 
-    <section id="result" class="card hidden">
-      <h2>Risultato</h2>
-      <div id="out"></div>
-    </section>
+    <!-- Pagina risultato/report -->
+    <div id="page-result" class="quiz-page">
+      <div class="card">
+        <div id="result-content"></div>
+        <div class="page-actions">
+          <button type="button" class="btn-restart" onclick="restartQuiz()">🔄 Ricomincia</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="/static/app.js"></script>

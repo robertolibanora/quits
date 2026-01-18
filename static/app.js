@@ -1,26 +1,43 @@
-const form = document.getElementById("quiz");
-const result = document.getElementById("result");
-const out = document.getElementById("out");
-const questionsContainer = document.getElementById("questions-container");
-
 let questionsData = null;
+let currentPage = 0;
+let answers = {};
+let totalPages = 0;
+
+// Struttura pagine: [nome, ...domande, domande_aperte]
+const pageStructure = ['name'];
 
 // Carica le domande all'avvio
 async function loadQuestions() {
   try {
     const res = await fetch("/api/questions");
     questionsData = await res.json();
-    renderQuestions();
+    setupPages();
   } catch (error) {
     console.error("Errore nel caricamento delle domande:", error);
-    questionsContainer.innerHTML = "<p class='err'>Errore nel caricamento delle domande</p>";
+    document.getElementById("questions-pages").innerHTML = "<p class='err'>Errore nel caricamento delle domande</p>";
   }
 }
 
-function renderQuestions() {
+function setupPages() {
   if (!questionsData) return;
   
   const questions = questionsData.questions || [];
+  const openQuestions = questionsData.open_questions || [];
+  
+  // Aggiungi le domande alla struttura (escludendo la pagina nome che è già presente)
+  questions.forEach(q => {
+    if (!pageStructure.includes(q.id)) {
+      pageStructure.push(q.id);
+    }
+  });
+  
+  // Le domande aperte sono gestite come una singola pagina
+  // Non le aggiungiamo alla struttura perché hanno una pagina dedicata
+  
+  totalPages = pageStructure.length + 1; // +1 per la pagina domande aperte
+  
+  // Crea le pagine delle domande
+  const questionsPagesContainer = document.getElementById("questions-pages");
   let html = "";
   
   questions.forEach((q, idx) => {
@@ -30,35 +47,218 @@ function renderQuestions() {
       )
       .join("");
     
+    const pageNum = idx + 1; // +1 perché c'è la pagina nome
+    
     html += `
-      <section class="card">
-        <label>${q.text}</label>
-        <select name="${q.id}" required>
-          <option value="">Seleziona…</option>
-          ${optionsHtml}
-        </select>
-      </section>
+      <div id="page-${q.id}" class="quiz-page">
+        <div class="card">
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+          <div class="question-number">Domanda ${pageNum} di ${questions.length}</div>
+          <h2>${q.text}</h2>
+          <select id="select-${q.id}" required>
+            <option value="">Seleziona…</option>
+            ${optionsHtml}
+          </select>
+          <div class="page-actions">
+            <button type="button" class="btn-prev" onclick="prevPage()">← Indietro</button>
+            <button type="button" class="btn-next" onclick="nextPage()">Avanti →</button>
+          </div>
+        </div>
+      </div>
     `;
   });
   
-  questionsContainer.innerHTML = html;
+  questionsPagesContainer.innerHTML = html;
+  
+  // Aggiorna progress bar pagina domande aperte
+  const progressOpen = document.getElementById("progress-open");
+  if (progressOpen) {
+    progressOpen.style.width = "100%";
+  }
+  
+  // Mostra la prima pagina
+  showPage(0);
+  updateProgressBar();
 }
 
-function formToJSON(formEl) {
-  const data = new FormData(formEl);
-  const obj = { name: "", answers: {} };
-
-  for (const [k, v] of data.entries()) {
-    if (k === "name") {
-      obj.name = v;
-    } else {
-      obj.answers[k] = v;
+function showPage(pageIndex) {
+  // Nascondi tutte le pagine
+  document.querySelectorAll(".quiz-page").forEach(page => {
+    page.classList.remove("active");
+  });
+  
+  let pageElement;
+  
+  if (pageIndex === 0) {
+    // Pagina nome
+    pageElement = document.getElementById("page-name");
+  } else if (pageIndex === totalPages - 1) {
+    // Pagina domande aperte (ultima pagina prima del risultato)
+    pageElement = document.getElementById("page-open-questions");
+  } else {
+    // Pagina domanda (pageIndex - 1 perché la prima è il nome)
+    const question = questionsData.questions[pageIndex - 1];
+    if (question) {
+      pageElement = document.getElementById(`page-${question.id}`);
     }
   }
-  return obj;
+  
+  if (pageElement) {
+    pageElement.classList.add("active");
+    currentPage = pageIndex;
+    
+    // Aggiorna progress bar
+    updateProgressBar();
+  }
 }
 
-function render(obj) {
+function updateProgressBar() {
+  const progress = ((currentPage + 1) / totalPages) * 100;
+  document.querySelectorAll(".progress-fill").forEach(bar => {
+    if (!bar.id || bar.id !== "progress-open") {
+      bar.style.width = `${progress}%`;
+    }
+  });
+}
+
+function nextPage() {
+  // Salva la risposta corrente
+  saveCurrentAnswer();
+  
+  // Valida la pagina corrente
+  if (!validateCurrentPage()) {
+    return;
+  }
+  
+  if (currentPage < totalPages - 1) {
+    showPage(currentPage + 1);
+  }
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    showPage(currentPage - 1);
+  }
+}
+
+function saveCurrentAnswer() {
+  const pageId = pageStructure[currentPage];
+  
+  if (currentPage === 0) {
+    // Salva il nome
+    const nameInput = document.getElementById("input-name");
+    if (nameInput) {
+      answers.name = nameInput.value;
+    }
+  } else if (currentPage === pageStructure.length - 1) {
+    // Salva le domande aperte
+    const whyUs = document.getElementById("textarea-why-us");
+    const nonNegotiables = document.getElementById("textarea-non-negotiables");
+    if (whyUs) answers.why_us = whyUs.value;
+    if (nonNegotiables) answers.non_negotiables = nonNegotiables.value;
+  } else {
+    // Salva la risposta alla domanda
+    const question = questionsData.questions[currentPage - 1];
+    const select = document.getElementById(`select-${question.id}`);
+    if (select && select.value) {
+      answers[question.id] = select.value;
+    }
+  }
+}
+
+function validateCurrentPage() {
+  const pageId = pageStructure[currentPage];
+  
+  if (currentPage === 0) {
+    const nameInput = document.getElementById("input-name");
+    if (!nameInput || !nameInput.value.trim()) {
+      alert("Inserisci il tuo nome per continuare");
+      return false;
+    }
+    return true;
+  }
+  
+  if (currentPage === pageStructure.length - 1) {
+    const whyUs = document.getElementById("textarea-why-us");
+    if (!whyUs || !whyUs.value.trim()) {
+      alert("Rispondi alla domanda 'Perché funzioneremmo' per continuare");
+      return false;
+    }
+    return true;
+  }
+  
+  // Valida domanda
+  const question = questionsData.questions[currentPage - 1];
+  const select = document.getElementById(`select-${question.id}`);
+  if (!select || !select.value) {
+    alert("Seleziona una risposta per continuare");
+    return false;
+  }
+  return true;
+}
+
+async function submitQuiz() {
+  // Salva le risposte finali
+  saveCurrentAnswer();
+  
+  // Valida
+  if (!validateCurrentPage()) {
+    return;
+  }
+  
+  // Mostra pagina risultato
+  showPageResult();
+  
+  // Prepara payload
+  const payload = {
+    name: answers.name || "",
+    answers: {}
+  };
+  
+  // Aggiungi tutte le risposte alle domande
+  questionsData.questions.forEach(q => {
+    if (answers[q.id]) {
+      payload.answers[q.id] = answers[q.id];
+    }
+  });
+  
+  // Aggiungi domande aperte
+  if (answers.why_us) payload.answers.why_us = answers.why_us;
+  if (answers.non_negotiables) payload.answers.non_negotiables = answers.non_negotiables;
+  
+  // Mostra loading
+  document.getElementById("result-content").innerHTML = "<div class='loading'>Calcolo compatibilità...</div>";
+  
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById("result-content").innerHTML = `<p class="err">Errore: ${data.error || "sconosciuto"}</p>`;
+      return;
+    }
+
+    renderResult(data);
+  } catch (error) {
+    document.getElementById("result-content").innerHTML = `<p class="err">Errore di connessione: ${error.message}</p>`;
+  }
+}
+
+function showPageResult() {
+  document.querySelectorAll(".quiz-page").forEach(page => {
+    page.classList.remove("active");
+  });
+  document.getElementById("page-result").classList.add("active");
+}
+
+function renderResult(obj) {
   const compatibilityLevels = {
     "non compatibile": "❌ Non compatibile",
     "potenziale": "⚠️ Potenziale",
@@ -84,7 +284,7 @@ function render(obj) {
 
   const list = (arr) => (arr || []).map(x => `<li>${x}</li>`).join("");
 
-  out.innerHTML = `
+  document.getElementById("result-content").innerHTML = `
     <div class="score-header">
       <div class="final-score">${obj.final_score}/100</div>
       <div class="compatibility-level">${levelLabel}</div>
@@ -158,35 +358,23 @@ function render(obj) {
   `;
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  result.classList.add("hidden");
-  out.innerHTML = "<div class='loading'>Calcolo compatibilità...</div>";
-
-  const payload = formToJSON(form);
-
-  try {
-    const res = await fetch("/api/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      out.innerHTML = `<p class="err">Errore: ${data.error || "sconosciuto"}</p>`;
-      result.classList.remove("hidden");
-      return;
-    }
-
-    render(data);
-    result.classList.remove("hidden");
-  } catch (error) {
-    out.innerHTML = `<p class="err">Errore di connessione: ${error.message}</p>`;
-    result.classList.remove("hidden");
-  }
-});
+function restartQuiz() {
+  // Reset tutto
+  currentPage = 0;
+  answers = {};
+  
+  // Reset form
+  document.getElementById("input-name").value = "";
+  questionsData.questions.forEach(q => {
+    const select = document.getElementById(`select-${q.id}`);
+    if (select) select.value = "";
+  });
+  document.getElementById("textarea-why-us").value = "";
+  document.getElementById("textarea-non-negotiables").value = "";
+  
+  // Torna alla prima pagina
+  showPage(0);
+}
 
 // Carica le domande all'avvio
 loadQuestions();
