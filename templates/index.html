@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Future Wife Quiz</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <h1>💍 Come diventare la mia futura moglie</h1>
+
+    <form id="quiz">
+      <section class="card">
+        <label>Nome (o nickname)</label>
+        <input name="name"/>
+      </section>
+
+      <div id="questions-container">
+        <!-- Le domande verranno caricate dinamicamente -->
+      </div>
+
+      <section class="card">
+        <h2>Domande aperte</h2>
+        
+        <label>Perché io e te funzioneremmo davvero?</label>
+        <textarea name="why_us" rows="4" placeholder="Scrivi come se fosse un messaggio vocale trascritto..." required></textarea>
+
+        <label>C'è qualcosa che dovrei sapere (limiti, bisogni, non negoziabili)?</label>
+        <textarea name="non_negotiables" rows="3"></textarea>
+      </section>
+
+      <section class="actions">
+        <button type="submit">🎯 Calcola compatibilità</button>
+      </section>
+    </form>
+
+    <section id="result" class="card hidden">
+      <h2>Risultato</h2>
+      <div id="out"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

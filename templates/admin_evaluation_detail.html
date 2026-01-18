@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dettaglio Valutazione #{{ evaluation.id }} - Admin</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .admin-nav {
+      margin-bottom: 2rem;
+    }
+    .admin-nav a {
+      color: #4a90e2;
+      text-decoration: none;
+    }
+    .admin-nav a:hover {
+      text-decoration: underline;
+    }
+    .evaluation-header {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 4px;
+      margin-bottom: 2rem;
+    }
+    .evaluation-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .meta-item {
+      padding: 0.75rem;
+      background: white;
+      border-radius: 4px;
+    }
+    .meta-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    .meta-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #222;
+    }
+    .answers-section {
+      margin-top: 2rem;
+    }
+    .answer-item {
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .answer-label {
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 0.5rem;
+    }
+    .answer-value {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="admin-nav">
+      <a href="/admin/dashboard">← Torna alla dashboard</a>
+    </div>
+
+    <div class="evaluation-header">
+      <h1>Valutazione #{{ evaluation.id }}</h1>
+      <div class="evaluation-meta">
+        <div class="meta-item">
+          <div class="meta-label">Nome</div>
+          <div class="meta-value">{{ evaluation.name or "—" }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Punteggio finale</div>
+          <div class="meta-value">{{ evaluation.final_score }}/100</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Livello compatibilità</div>
+          <div class="meta-value">{{ evaluation.compatibility_level }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Data</div>
+          <div class="meta-value">{{ evaluation.created_at or "—" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Verdetto</h2>
+      <p>{{ evaluation.verdict }}</p>
+    </div>
+
+    <div class="card">
+      <h2>Indici di compatibilità</h2>
+      <div class="indices-grid">
+        <div class="index-item">
+          <span class="index-label">Fiducia</span>
+          <span class="index-value">{{ evaluation.trust_index }}/10</span>
+        </div>
+        <div class="index-item">
+          <span class="index-label">Visione</span>
+          <span class="index-value">{{ evaluation.vision_index }}/10</span>
+        </div>
+        <div class="index-item">
+          <span class="index-label">Maturità emotiva</span>
+          <span class="index-value">{{ evaluation.emotional_maturity_index }}/10</span>
+        </div>
+        <div class="index-item">
+          <span class="index-label">Allineamento ambizione</span>
+          <span class="index-value">{{ evaluation.ambition_alignment_index }}/10</span>
+        </div>
+      </div>
+    </div>
+
+    {% if evaluation.final_report %}
+    <div class="card" style="background: #fff9e6; border-left: 4px solid #ff9800;">
+      <h2>📋 Resoconto finale</h2>
+      <div style="line-height: 1.9; color: #333; font-size: 1.05rem; text-align: justify;">{{ evaluation.final_report }}</div>
+    </div>
+    {% endif %}
+
+    {% if evaluation.interpretation %}
+    <div class="card">
+      <h2>🧠 Interpretazione avanzata</h2>
+      <div class="interpretation-text">{{ evaluation.interpretation }}</div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Punti di forza</h2>
+      <ul>
+        {% for strength in evaluation.strengths %}
+        <li>{{ strength }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Criticità</h2>
+      <ul>
+        {% for concern in evaluation.concerns %}
+        <li>{{ concern }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if evaluation.red_flags %}
+    <div class="card">
+      <h2>Red flags</h2>
+      <ul>
+        {% for flag in evaluation.red_flags %}
+        <li>{{ flag }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Messaggio finale</h2>
+      <p>{{ evaluation.final_message }}</p>
+    </div>
+
+    <div class="card answers-section">
+      <h2>Risposte fornite</h2>
+      {% for key, value in evaluation.answers.items() %}
+      <div class="answer-item">
+        <div class="answer-label">{{ key }}</div>
+        <div class="answer-value">{{ value }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

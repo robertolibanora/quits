@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard - Future Wife Quiz</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #eee;
+    }
+    .admin-header h1 {
+      margin: 0;
+    }
+    .logout-btn {
+      padding: 0.5rem 1rem;
+      background: #d32f2f;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .logout-btn:hover {
+      background: #b71c1c;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #222;
+    }
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .evaluations-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .evaluations-table th,
+    .evaluations-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .evaluations-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #222;
+    }
+    .evaluations-table tr:hover {
+      background: #f8f9fa;
+    }
+    .score-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .score-high { background: #4caf50; color: white; }
+    .score-medium { background: #ff9800; color: white; }
+    .score-low { background: #f44336; color: white; }
+    .view-link {
+      color: #4a90e2;
+      text-decoration: none;
+    }
+    .view-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="admin-header">
+      <h1>📊 Admin Dashboard</h1>
+      <a href="/admin/logout" class="logout-btn">Logout</a>
+    </div>
+
+    {% if error %}
+    <div class="err">{{ error }}</div>
+    {% endif %}
+
+    {% if stats %}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total or 0 }}</div>
+        <div class="stat-label">Totale valutazioni</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ "%.1f"|format(stats.avg_score or 0) }}</div>
+        <div class="stat-label">Punteggio medio</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.wife_material_count or 0 }}</div>
+        <div class="stat-label">Wife Material</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.compatible_count or 0 }}</div>
+        <div class="stat-label">Compatibili</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.potential_count or 0 }}</div>
+        <div class="stat-label">Potenziali</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.incompatible_count or 0 }}</div>
+        <div class="stat-label">Non compatibili</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Valutazioni ({{ evaluations|length }})</h2>
+      {% if evaluations %}
+      <table class="evaluations-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Punteggio</th>
+            <th>Livello</th>
+            <th>Verdetto</th>
+            <th>Data</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for eval in evaluations %}
+          <tr>
+            <td>#{{ eval.id }}</td>
+            <td>{{ eval.name or "—" }}</td>
+            <td>
+              <span class="score-badge {% if eval.final_score >= 70 %}score-high{% elif eval.final_score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                {{ eval.final_score }}/100
+              </span>
+            </td>
+            <td>{{ eval.compatibility_level }}</td>
+            <td>{{ eval.verdict[:50] }}{% if eval.verdict|length > 50 %}...{% endif %}</td>
+            <td>{{ eval.created_at[:10] if eval.created_at else "—" }}</td>
+            <td>
+              <a href="/admin/evaluation/{{ eval.id }}" class="view-link">Dettaglio</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>Nessuna valutazione trovata.</p>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>
