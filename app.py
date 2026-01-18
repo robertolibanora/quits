@@ -2,9 +2,9 @@ import os
 import json
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from questions import QUESTIONS, OPEN_QUESTIONS
-from database import init_db, save_evaluation, get_evaluation, get_all_evaluations, get_statistics
-from interpretation import generate_interpretation, generate_final_report
+from .questions import QUESTIONS, OPEN_QUESTIONS
+from .database import init_db, save_evaluation, get_evaluation, get_all_evaluations, get_statistics
+from .interpretation import generate_interpretation, generate_final_report
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "liba2004-secret-key-change-in-production")
