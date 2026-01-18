@@ -35,6 +35,7 @@ function setupPages() {
   // Non le aggiungiamo alla struttura perché hanno una pagina dedicata
   
   totalPages = pageStructure.length + 1; // +1 per la pagina domande aperte
+  console.log("Total pages:", totalPages, "Questions:", questions.length, "PageStructure:", pageStructure.length);
   
   // Crea le pagine delle domande
   const questionsPagesContainer = document.getElementById("questions-pages");
@@ -45,8 +46,8 @@ function setupPages() {
       .map(([value, opt]) => 
         `<option value="${value}">${opt.label}</option>`
       )
-      .join("");
-    
+    .join("");
+
     const pageNum = idx + 1; // +1 perché c'è la pagina nome
     
     html += `
@@ -97,11 +98,16 @@ function showPage(pageIndex) {
   } else if (pageIndex === totalPages - 1) {
     // Pagina domande aperte (ultima pagina prima del risultato)
     pageElement = document.getElementById("page-open-questions");
+    if (!pageElement) {
+      console.error("Pagina domande aperte non trovata! totalPages:", totalPages, "pageIndex:", pageIndex);
+    }
   } else {
     // Pagina domanda (pageIndex - 1 perché la prima è il nome)
     const question = questionsData.questions[pageIndex - 1];
     if (question) {
       pageElement = document.getElementById(`page-${question.id}`);
+    } else {
+      console.error("Domanda non trovata per pageIndex:", pageIndex);
     }
   }
   
@@ -111,6 +117,8 @@ function showPage(pageIndex) {
     
     // Aggiorna progress bar
     updateProgressBar();
+  } else {
+    console.error("Nessuna pagina trovata per index:", pageIndex);
   }
 }
 
@@ -132,8 +140,12 @@ function nextPage() {
     return;
   }
   
+  console.log("Next page - current:", currentPage, "totalPages:", totalPages, "next:", currentPage + 1);
+  
   if (currentPage < totalPages - 1) {
     showPage(currentPage + 1);
+  } else {
+    console.log("Già all'ultima pagina!");
   }
 }
 
@@ -144,16 +156,14 @@ function prevPage() {
 }
 
 function saveCurrentAnswer() {
-  const pageId = pageStructure[currentPage];
-  
   if (currentPage === 0) {
     // Salva il nome
     const nameInput = document.getElementById("input-name");
     if (nameInput) {
       answers.name = nameInput.value;
     }
-  } else if (currentPage === pageStructure.length - 1) {
-    // Salva le domande aperte
+  } else if (currentPage === totalPages - 1) {
+    // Salva le domande aperte (ultima pagina prima del risultato)
     const whyUs = document.getElementById("textarea-why-us");
     const nonNegotiables = document.getElementById("textarea-non-negotiables");
     if (whyUs) answers.why_us = whyUs.value;
@@ -161,16 +171,16 @@ function saveCurrentAnswer() {
   } else {
     // Salva la risposta alla domanda
     const question = questionsData.questions[currentPage - 1];
-    const select = document.getElementById(`select-${question.id}`);
-    if (select && select.value) {
-      answers[question.id] = select.value;
+    if (question) {
+      const select = document.getElementById(`select-${question.id}`);
+      if (select && select.value) {
+        answers[question.id] = select.value;
+      }
     }
   }
 }
 
 function validateCurrentPage() {
-  const pageId = pageStructure[currentPage];
-  
   if (currentPage === 0) {
     const nameInput = document.getElementById("input-name");
     if (!nameInput || !nameInput.value.trim()) {
@@ -180,7 +190,8 @@ function validateCurrentPage() {
     return true;
   }
   
-  if (currentPage === pageStructure.length - 1) {
+  if (currentPage === totalPages - 1) {
+    // Pagina domande aperte (ultima pagina prima del risultato)
     const whyUs = document.getElementById("textarea-why-us");
     if (!whyUs || !whyUs.value.trim()) {
       alert("Rispondi alla domanda 'Perché funzioneremmo' per continuare");
@@ -191,6 +202,9 @@ function validateCurrentPage() {
   
   // Valida domanda
   const question = questionsData.questions[currentPage - 1];
+  if (!question) {
+    return false;
+  }
   const select = document.getElementById(`select-${question.id}`);
   if (!select || !select.value) {
     alert("Seleziona una risposta per continuare");
@@ -232,18 +246,18 @@ async function submitQuiz() {
   document.getElementById("result-content").innerHTML = "<div class='loading'>Calcolo compatibilità...</div>";
   
   try {
-    const res = await fetch("/api/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const res = await fetch("/api/score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (!res.ok) {
+  if (!res.ok) {
       document.getElementById("result-content").innerHTML = `<p class="err">Errore: ${data.error || "sconosciuto"}</p>`;
-      return;
-    }
+    return;
+  }
 
     renderResult(data);
   } catch (error) {
