@@ -121,7 +121,7 @@ def get_evaluation(eval_id: int):
             "red_flags": json.loads(row["red_flags_json"]),
             "interpretation": row["interpretation"],
             "final_message": row["final_message"],
-            "final_report": row.get("final_report"),  # Usa get per compatibilità con DB vecchi
+            "final_report": row["final_report"] if "final_report" in row.keys() else None,  # Compatibilità con DB vecchi
             "created_at": row["created_at"]
         }
 
